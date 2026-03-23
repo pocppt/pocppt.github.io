@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Encoder/Decoder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #c1caf1 0%, #c5a3e7 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 80%;
+            min-height: 80vh;
+            background: white;
+            border-radius: 1px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .key-section {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .key-section label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        .key-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .key-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .md5-display {
+            font-size: 12px;
+            color: #999;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            min-width: 50%;
+        }
+
+        .editor-container {
+            display: flex;
+            gap: 15px;
+            min-height: 350px;
+        }
+
+        .editor-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .editor-section label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .char-count {
+            font-size: 12px;
+            color: #999;
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        .status-message {
+            font-size: 13px;
+            color: #28a745;
+            text-align: center;
+            min-height: 18px;
+            margin-top: 10px;
+            transition: opacity 0.3s;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: none;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-encode {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-decode {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Base64 Encoder/Decoder</h1>
+        </div>
+        
+        <div class="main-content">
+         
+            
+            <div class="editor-container">
+                <div class="editor-section">
+                    <label>Input Text</label>
+                    <textarea id="input" placeholder="Enter text to encode or decode"></textarea>
+                    <div class="char-count" id="input-count">count: 0</div>
+                </div>
+                <div class="editor-section">
+                    <label>Output Text</label>
+                    <textarea id="output" placeholder="Result will appear here" readonly></textarea>
+                    <div class="char-count" id="output-count">count: 0</div>
+                </div>
+            </div>
+
+            <div class="key-section">
+                <label>Optional Password:</label>
+                <input type="password" id="key" class="key-input" placeholder="" maxlength="36">
+                <div class="md5-display" id="md5-display"> (1-36 character password)</div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-encode" onclick="encode()">Encode</button>
+                <button class="btn btn-decode" onclick="decode()">Decode</button>
+                <button class="btn btn-clear" onclick="clearAll()">Clear</button>
+                <button class="btn btn-copy" onclick="copyOutput()">Copy Output</button>
+            </div>
+            <div class="status-message" id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        function updateCharCount() {
+            document.getElementById('input-count').textContent = 'count: ' + document.getElementById('input').value.length;
+            document.getElementById('output-count').textContent = 'count: ' + document.getElementById('output').value.length;
+        }
+
+        function updateMd5() {
+            const key = document.getElementById('key').value;
+            if (key.trim() === '') {
+                document.getElementById('md5-display').textContent = ' (1-36 character password)';
+            } else {
+                const hash = CryptoJS.MD5(key).toString();
+                document.getElementById('md5-display').textContent = 'MD5: ' + hash;
+            }
+        }
+
+        function encode() {
+            const input = document.getElementById('input').value;
+            const key = document.getElementById('key').value;
+            
+            try {
+                let result = btoa(unescape(encodeURIComponent(input)));
+
+                if (result.trim() === '') {
+                    showStatus('Input text is empty!', 'yellow');
+                    return;
+                }
+                
+                if ((key.trim() !== '') && (result.trim() !== '')) {
+                    const keyHash = CryptoJS.MD5(key).toString();
+                    const encrypted = CryptoJS.AES.encrypt(result, keyHash).toString();
+                    result = btoa(encrypted);
+                }
+                
+                document.getElementById('output').value = result;
+                updateCharCount();
+            } catch (e) {
+                document.getElementById('output').value = 'Error: ' + e.message;
+            }
+        }
+
+        function decode() {
+            const input = document.getElementById('input').value;
+            const key = document.getElementById('key').value;
+            
+            try {
+                let result = input;
+                if (result.trim() === '') {
+                    showStatus('Input text is empty!', 'yellow');
+                    return;
+                }
+                
+                if (key.trim() !== '') {
+                    const keyHash = CryptoJS.MD5(key).toString();
+                    const decoded = atob(result);
+                    const decrypted = CryptoJS.AES.decrypt(decoded, keyHash);
+                    result = decodeURIComponent(escape(atob(decrypted.toString(CryptoJS.enc.Utf8))));
+                } else {
+                    result = decodeURIComponent(escape(atob(result)));
+                }
+                
+                document.getElementById('output').value = result;
+                updateCharCount();
+            } catch (e) {
+                document.getElementById('output').value = 'Error: Invalid Base64 or wrong key';
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('input').value = '';
+            document.getElementById('output').value = '';
+            document.getElementById('key').value = '';
+            document.getElementById('md5-display').textContent = '';
+            updateCharCount();
+            document.getElementById('input').focus();
+        }
+
+        function showStatus(message, color) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.style.color = color === 'green' ? '#28a745' : '#dc3545';
+            setTimeout(() => {
+                status.textContent = '';
+            }, 2000);
+        }
+
+        function copyOutput() {
+            const output = document.getElementById('output');
+            if (output.value.trim() === '') {
+                showStatus('Output is empty!', 'red');
+                return;
+            }
+            output.select();
+            document.execCommand('copy');
+            showStatus('Copy successful!', 'green');
+        }
+
+        document.getElementById('input').addEventListener('input', updateCharCount);
+        document.getElementById('output').addEventListener('input', updateCharCount);
+        document.getElementById('key').addEventListener('input', updateMd5);
+    </script>
+</body>
+</html>
